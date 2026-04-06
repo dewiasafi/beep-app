@@ -1,0 +1,19 @@
+{
+  "name": "beep-app",
+  "version": "1.0.0",
+  "description": "![Version](https://img.shields.io/badge/version-0.1.0-blue)\r ![Node.js](https://img.shields.io/badge/Node.js-24.x-339933?logo=nodedotjs&logoColor=white)",
+  "main": "index.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "npx tsc",
+    "start" : "node dist/index.js",
+    "dev" : "npx tsc && node dist/index.js"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.2"
+  }
+}

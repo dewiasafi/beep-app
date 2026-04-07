@@ -37,6 +37,7 @@ So yeah, BEEP is:
 * food
 * shopping
 * transport
+* bills
 * other
 
 ---
@@ -59,7 +60,7 @@ beep-app/
 │   ├── services/
 │   │   └── expenseService.ts      # Business logic
 │   ├── utils/
-│   │   └── logger.ts              # Optional utilities
+│   │   └── storage.ts              # setup for save data to json file
 │   └── index.ts                   # CLI entry point
 ├── dist/                          # Compiled JavaScript (ignored by git)
 ├── tsconfig.json                  # TypeScript configuration
@@ -93,7 +94,12 @@ npm run dev
 2. List Expenses
 3. Delete Expense
 4. Total Expense
-5. Exit
+5. Get Expense By Id
+6. Get Expense By Category
+7. Get Expense By Date
+8. Get Expense By Range Date
+9. Get Average Expense
+10. Save Data to JSON file
 ```
 
 ---
@@ -108,9 +114,3 @@ This project covers:
 * Array manipulation
 * CLI interaction with Node.js
 * Basic input validation
-
----
-
-## 📄 License
-
-This project is open-source and free to use.

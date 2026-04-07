@@ -1,44 +1,36 @@
-import { 
-  initExpenses, 
-  addExpense, 
+import {
+  initExpenses,
+  addExpense,
   getExpensesByRangeDate,
   getTotalExpense,
   getAverageExpense,
-  getExpensesByDate
+  getExpensesByDate,
+  getExpensesByPaymentMethod,
+  getExpensesByPaymentProvider,
 } from "./services/expense_service.js";
 
 async function main() {
-  console.log("=== EXPENSE TRACKER ===\n");
-  
-  await initExpenses();
-  
-  // Tambah data
-  await addExpense("Makan Siang", 50000, "food", "Nasi Padang");
-  await addExpense("Beli Buku", 75000, "shopping", "lipstik");
-  await addExpense("Gojek", 25000, "transport");
-  
-  // Test getExpensesByDate (sudah diperbaiki)
-  console.log("\n=== Expenses on 07-04-2026 ===");
-  const todayExpenses = getExpensesByDate("07-04-2026");
-  todayExpenses.forEach(e => {
-    console.log(`  ${e.title}: Rp${e.amount}`);
-  });
-  
-  // Test range date
-  console.log("\n=== Expenses April 2026 ===");
-  const aprilExpenses = getExpensesByRangeDate("01-04-2026", "30-04-2026");
-  aprilExpenses.forEach(e => {
-    console.log(`  ${e.title}: Rp${e.amount}`);
-  });
-  
-  // Test total
-  console.log("\n=== Summary ===");
-  console.log(`  Total: Rp${getTotalExpense()}`);
-  console.log(`  Average: Rp${getAverageExpense()}`);
-  
-  // Test invalid date (akan muncul error)
-  console.log("\n=== Invalid Date Test ===");
-  getExpensesByDate("31-02-2026"); // Akan error
+ // Tambah berbagai jenis pembayaran
+await addExpense("Makan Siang", 50000, "food", "qris", "ShopeePay", "Nasi Padang");
+await addExpense("Makan Malam", 80000, "food", "qris", "BCA");
+await addExpense("Tagihan Listrik", 200000, "bills", "virtual_account", "BCA", "VA:1234567890");
+await addExpense("Transfer ke Teman", 100000, "other", "bank_transfer", "BCA");
+await addExpense("Belanja di Mall", 250000, "shopping", "debit_card", "BCA");
+await addExpense("Top Up Gopay", 50000, "other", "e_wallet", "GoPay");
+
+// Filter berdasarkan provider
+console.log("\n=== Pembayaran via BCA ===");
+const bcaPayments = getExpensesByPaymentProvider("BCA");
+bcaPayments.forEach(e => {
+  console.log(`  ${e.title}: Rp${e.amount} (${e.paymentMethod}) - ${e.paymentProvider || '-'}`);
+});
+
+// Filter berdasarkan payment detail
+console.log("\n=== Cari VA: ===");
+const vaPayments = getExpensesByPaymentMethod("virtual_account");
+vaPayments.forEach(e => {
+  console.log(`  ${e.title}: ${e.paymentProvider}`);
+});
 }
 
 main().catch(console.error);

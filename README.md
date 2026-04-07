@@ -109,8 +109,3 @@ This project covers:
 * CLI interaction with Node.js
 * Basic input validation
 
----
-
-## 📄 License
-
-This project is open-source and free to use.

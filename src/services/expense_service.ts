@@ -1,4 +1,3 @@
-import { start } from "node:repl";
 import { loadExpensesData, saveExpensesData } from "../utils/storage.js";
 import type { Expense } from "./../models/expense.js";
 import { isValidDate, parseDate } from "../utils/function/formatDate.js";
@@ -7,36 +6,46 @@ let expenses: Expense[] = [];
 
 export async function initExpenses() {
   expenses = await loadExpensesData();
-  console.log(`Loaded ${expenses.length} expenses from file`);
 }
 
 export const addExpense = async (
-  title: string,
-  amount: number,
-  category: Expense["category"],
-  note?: string,
+  payload: {
+    title: string;
+    amount: number;
+    category: Expense["category"];
+    paymentMethod: Expense["paymentMethod"];
+    note?: string;
+    paymentProvider?: string;
+  },
+  //note: params yang required didahulukan baru yang opsional (wajib)
 ): Promise<Expense> => {
-  if (!title || title.trim().length === 0) {
+  if (!payload.title || payload.title.trim().length === 0) {
     throw new Error("Title is required");
   }
-  if (!amount || amount < 0) {
+  if (!payload.amount || payload.amount < 0) {
     throw new Error("Amount is required and must be greater than 0");
+  }
+  if (!payload.paymentMethod) {
+    throw new Error("Payment method is required");
   }
   let newId = expenses.length > 0 ? Math.max(...expenses.map((e) => e.id)) : 0;
   const newExpense: Expense = {
     id: newId + 1,
-    title,
-    amount,
-    category,
+    title: payload.title,
+    amount: payload.amount,
+    category: payload.category,
+    paymentMethod: payload.paymentMethod,
     createdAt: new Date(),
   };
-  if (note) {
-    newExpense.note = note;
-  }
+  if (payload.note) newExpense.note = payload.note;
+  if (payload.paymentProvider)
+    newExpense.paymentProvider = payload.paymentProvider;
+
   expenses.push(newExpense);
   await saveExpensesData(expenses);
-  console.log(`✅ Added: ${title} - Rp${amount}`);
-
+  console.log(
+    `✅ Added: ${payload.title} - Rp${payload.amount} (${payload.paymentMethod}${payload.paymentProvider ? ` - ${payload.paymentProvider}` : ""})`,
+  );
   return newExpense;
 };
 
@@ -46,64 +55,6 @@ export const getExpenses = (): Expense[] => {
 
 export const getExpensesById = (id: number): Expense | undefined => {
   return expenses.find((e) => e.id === id);
-};
-
-export const getExpensesByCategory = (
-  category: Expense["category"],
-): Expense[] => {
-  return expenses.filter((e) => e.category === category);
-};
-
-export const getExpensesByDate = (dateString: string): Expense[] => {
-  if (isValidDate(dateString)) {
-    console.error(`❌ Format tanggal salah: "${dateString}"`);
-    console.error(`   Gunakan format: dd-mm-yyyy (contoh: 08-04-2026)`);
-  }
-  const targetDate = parseDate(dateString);
-  if (!targetDate) return [];
-
-  const startOfDay = new Date(targetDate);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(targetDate);
-  endOfDay.setHours(23, 59, 59, 999);
-
-  return expenses.filter((e) => {
-    const expenseDate = new Date(e.createdAt);
-    return expenseDate >= startOfDay && expenseDate <= endOfDay;
-  });
-};
-
-export const getExpensesByRangeDate = (startDateString: string, endDateString: string): Expense[] => {
-  if (!isValidDate(startDateString)) {
-    console.error(`❌ Format tanggal awal salah: ${startDateString}`);
-    return [];
-  }
-  
-  if (!isValidDate(endDateString)) {
-    console.error(`❌ Format tanggal akhir salah: ${endDateString}`);
-    return [];
-  }
-  
-  const startDate = parseDate(startDateString);
-  const endDate = parseDate(endDateString);
-  
-  if (!startDate || !endDate) return [];
-  
-  if (startDate > endDate) {
-    console.error(`❌ Tanggal awal harus lebih kecil dari tanggal akhir`);
-    return [];
-  }
-  
-  const start = new Date(startDate);
-  start.setHours(0, 0, 0, 0);
-  
-  const end = new Date(endDate);
-  end.setHours(23, 59, 59, 999);
-  
-  return expenses.filter(e => {
-    const expenseDate = new Date(e.createdAt);
-    return expenseDate >= start && expenseDate <= end;
-  });
 };
 
 export const deleteExpense = async (id: number): Promise<boolean> => {
@@ -118,23 +69,27 @@ export const deleteExpense = async (id: number): Promise<boolean> => {
   return false;
 };
 
-export const updateExpense = async (
-  id: number,
-  title: string,
-  amount?: number,
-  note?: string,
-  category?: Expense["category"],
-): Promise<Expense | null> => {
-  const expense = expenses.find((e) => e.id === id);
+export const updateExpense = async (update: {
+  id: number;
+  title?: string;
+  amount?: number;
+  note?: string;
+  category?: Expense["category"];
+  paymentMethod?: Expense["paymentProvider"];
+  paymentProvider?: string;
+}): Promise<Expense | null> => {
+  const expense = expenses.find((e) => e.id === update.id);
   if (!expense) return null;
 
-  if (title) expense.title = title;
-  if (amount) expense.amount = amount;
-  if (note) expense.note = note;
-  if (category) expense.category = category;
+  if ("title" in update) expense.title = update.title;
+  if ("amount" in update) expense.amount = update.amount;
+  if ("note" in update) expense.note = update.note;
+  if (update.category) expense.category = update.category;
+  if (update.paymentMethod) expense.paymentProvider = update.paymentMethod;
+  if ("paymentProvider" in update) expense.paymentProvider = update.paymentProvider;
 
   await saveExpensesData(expenses);
-  console.log(`✏️ Updated expense ID: ${id}`);
+  console.log(`✏️ Updated expense ID: ${update.id}`);
   return expense;
 };
 

@@ -14,7 +14,7 @@ export const formatDateTime = (date: Date): string => {
   return `${day}-${month}-${year} ${hours}:${minutes}`;
 };
 
-export const parseDate = (dateString?: string): Date | null => {
+export const parseDate = (dateString: string): Date | null => {
   if (!dateString) return null;
   
   const parts = dateString.split('-');

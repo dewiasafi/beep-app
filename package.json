@@ -9,12 +9,19 @@
   "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "npx tsc",
-    "start" : "node dist/index.js",
-    "dev" : "npx tsc && node dist/index.js"
+    "build": "tsc",
+    "dev": "tsx src/index.ts",
+    "server": "tsx src/server.ts",
+    "server:dev": "tsx watch src/server.ts",
+    "start": "node dist/server.js"
   },
   "devDependencies": {
+    "@types/express": "^5.0.6",
     "@types/node": "^25.5.2",
+    "tsx": "^4.21.0",
     "typescript": "^6.0.2"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
   }
 }

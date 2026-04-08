@@ -7,30 +7,34 @@ import {
   getExpensesByDate,
   getExpensesByPaymentMethod,
   getExpensesByPaymentProvider,
+  getExpenses,
+  updateExpense,
+  deleteExpense,
 } from "./services/expense_service.js";
 
 async function main() {
- // Tambah berbagai jenis pembayaran
-await addExpense("Makan Siang", 50000, "food", "qris", "ShopeePay", "Nasi Padang");
-await addExpense("Makan Malam", 80000, "food", "qris", "BCA");
-await addExpense("Tagihan Listrik", 200000, "bills", "virtual_account", "BCA", "VA:1234567890");
-await addExpense("Transfer ke Teman", 100000, "other", "bank_transfer", "BCA");
-await addExpense("Belanja di Mall", 250000, "shopping", "debit_card", "BCA");
-await addExpense("Top Up Gopay", 50000, "other", "e_wallet", "GoPay");
+  await initExpenses();
+  //   await addExpense({
+  //     title: "Transfer ke Teman",
+  //     amount: 10000,
+  //     category: "other",
+  //     paymentMethod: "bank_transfer",
+  //     paymentProvider: "BCA",
+  //     note: "Ganti uang temen"
+  //   });
+//   await updateExpense({ id: 4, paymentProvider: "Gopay", note: "" });
+await deleteExpense(5)
+  // // Filter berdasarkan provider
+  const all = getExpensesByDate("08-04-2026");
+  //   const bcaPayments = getExpensesByPaymentProvider("BCA");
+  console.log(all);
 
-// Filter berdasarkan provider
-console.log("\n=== Pembayaran via BCA ===");
-const bcaPayments = getExpensesByPaymentProvider("BCA");
-bcaPayments.forEach(e => {
-  console.log(`  ${e.title}: Rp${e.amount} (${e.paymentMethod}) - ${e.paymentProvider || '-'}`);
-});
-
-// Filter berdasarkan payment detail
-console.log("\n=== Cari VA: ===");
-const vaPayments = getExpensesByPaymentMethod("virtual_account");
-vaPayments.forEach(e => {
-  console.log(`  ${e.title}: ${e.paymentProvider}`);
-});
+  // Filter berdasarkan payment detail
+  //   console.log("\n=== Cari VA: ===");
+  //   const vaPayments = getExpensesByPaymentMethod("virtual_account");
+  //   vaPayments.forEach(e => {
+  //     console.log(`${e.title}: ${e.paymentProvider}`);
+  //   });
 }
 
 main().catch(console.error);

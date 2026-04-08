@@ -6,43 +6,45 @@ let expenses: Expense[] = [];
 
 export async function initExpenses() {
   expenses = await loadExpensesData();
-  console.log(`Loaded ${expenses.length} expenses from file`);
 }
 
 export const addExpense = async (
-  title: string,
-  amount: number,
-  category: Expense["category"],
-  paymentMethod: Expense["paymentMethod"],
-  note?: string,
-  paymentProvider?: string,
+  payload: {
+    title: string;
+    amount: number;
+    category: Expense["category"];
+    paymentMethod: Expense["paymentMethod"];
+    note?: string;
+    paymentProvider?: string;
+  },
   //note: params yang required didahulukan baru yang opsional (wajib)
 ): Promise<Expense> => {
-  if (!title || title.trim().length === 0) {
+  if (!payload.title || payload.title.trim().length === 0) {
     throw new Error("Title is required");
   }
-  if (!amount || amount < 0) {
+  if (!payload.amount || payload.amount < 0) {
     throw new Error("Amount is required and must be greater than 0");
   }
-  if (!paymentMethod) {
+  if (!payload.paymentMethod) {
     throw new Error("Payment method is required");
   }
   let newId = expenses.length > 0 ? Math.max(...expenses.map((e) => e.id)) : 0;
   const newExpense: Expense = {
     id: newId + 1,
-    title,
-    amount,
-    category,
-    paymentMethod,
+    title: payload.title,
+    amount: payload.amount,
+    category: payload.category,
+    paymentMethod: payload.paymentMethod,
     createdAt: new Date(),
   };
-  if (note) newExpense.note = note;
-  if (paymentProvider) newExpense.paymentProvider = paymentProvider;
+  if (payload.note) newExpense.note = payload.note;
+  if (payload.paymentProvider)
+    newExpense.paymentProvider = payload.paymentProvider;
 
   expenses.push(newExpense);
   await saveExpensesData(expenses);
   console.log(
-    `✅ Added: ${title} - Rp${amount} (${paymentMethod}${paymentProvider ? ` - ${paymentProvider}` : ""})`,
+    `✅ Added: ${payload.title} - Rp${payload.amount} (${payload.paymentMethod}${payload.paymentProvider ? ` - ${payload.paymentProvider}` : ""})`,
   );
   return newExpense;
 };
@@ -64,17 +66,15 @@ export const getExpensesByCategory = (
 export const getExpensesByPaymentMethod = (
   method: Expense["paymentMethod"],
 ): Expense[] => {
-     return expenses.filter(e => e.paymentMethod === method)
+  return expenses.filter((e) => e.paymentMethod === method);
 };
 
-export const getExpensesByPaymentProvider = (
-  provider: string,
-): Expense[] => {
-     return expenses.filter(e => e.paymentProvider === provider)
+export const getExpensesByPaymentProvider = (provider: string): Expense[] => {
+  return expenses.filter((e) => e.paymentProvider === provider);
 };
 
 export const getExpensesByDate = (dateString: string): Expense[] => {
-  if (isValidDate(dateString)) {
+  if (!isValidDate(dateString)) {
     console.error(`❌ Format tanggal salah: "${dateString}"`);
     console.error(`   Gunakan format: dd-mm-yyyy (contoh: 08-04-2026)`);
   }
@@ -140,27 +140,27 @@ export const deleteExpense = async (id: number): Promise<boolean> => {
   return false;
 };
 
-export const updateExpense = async (
-  id: number,
-  title: string,
-  amount?: number,
-  note?: string,
-  category?: Expense["category"],
-  paymentMethod?: Expense["paymentProvider"],
-  paymentProvider?: string,
-): Promise<Expense | null> => {
-  const expense = expenses.find((e) => e.id === id);
+export const updateExpense = async (update: {
+  id: number;
+  title?: string;
+  amount?: number;
+  note?: string;
+  category?: Expense["category"];
+  paymentMethod?: Expense["paymentProvider"];
+  paymentProvider?: string;
+}): Promise<Expense | null> => {
+  const expense = expenses.find((e) => e.id === update.id);
   if (!expense) return null;
 
-  if (title) expense.title = title;
-  if (amount) expense.amount = amount;
-  if (note) expense.note = note;
-  if (category) expense.category = category;
-  if (paymentMethod) expense.paymentProvider = paymentMethod;
-  if (paymentProvider) expense.paymentProvider = paymentProvider;
+  if ("title" in update) expense.title = update.title;
+  if ("amount" in update) expense.amount = update.amount;
+  if ("note" in update) expense.note = update.note;
+  if (update.category) expense.category = update.category;
+  if (update.paymentMethod) expense.paymentProvider = update.paymentMethod;
+  if ("paymentProvider" in update) expense.paymentProvider = update.paymentProvider;
 
   await saveExpensesData(expenses);
-  console.log(`✏️ Updated expense ID: ${id}`);
+  console.log(`✏️ Updated expense ID: ${update.id}`);
   return expense;
 };
 

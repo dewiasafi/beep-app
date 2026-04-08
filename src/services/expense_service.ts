@@ -75,7 +75,7 @@ export const updateExpense = async (update: {
   amount?: number;
   note?: string;
   category?: Expense["category"];
-  paymentMethod?: Expense["paymentProvider"];
+  paymentMethod?: Expense["paymentMethod"];
   paymentProvider?: string;
 }): Promise<Expense | null> => {
   const expense = expenses.find((e) => e.id === update.id);

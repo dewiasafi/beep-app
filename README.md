@@ -60,6 +60,7 @@ So yeah, BEEP is:
 * TypeScript
 * Node.js
 * ts-node
+* express
 
 ---
 
@@ -68,8 +69,12 @@ So yeah, BEEP is:
 ```txt
 beep-app/
 ├── src/
+│   ├── controllers
+│   │   └──expense_controller.ts
 │   ├── models/
 │   │   └── expense.ts             # Type definitions
+│   ├── routes
+│   │   └──expense_routes.ts
 │   ├── services/
 │   │   └── expenseService.ts      # Business logic
 │   ├── utils/
@@ -77,6 +82,7 @@ beep-app/
 |   |   |      └── formatDate.ts   # function for formating date
 │   │   └── storage.ts             # setup for save data to json file
 │   └── index.ts                   # CLI entry point
+│   └── server.ts
 ├── dist/                          # Compiled JavaScript (ignored by git)
 ├── tsconfig.json                  # TypeScript configuration
 ├── package.json
@@ -115,6 +121,7 @@ npm run dev
 8. Get Expense By Range Date
 9. Get Average Expense
 10. Save Data to JSON file
+11. CRUD Expense
 ```
 
 ---
@@ -129,3 +136,4 @@ This project covers:
 * Array manipulation
 * CLI interaction with Node.js
 * Basic input validation
+* REST API using express

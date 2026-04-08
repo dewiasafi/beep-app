@@ -29,6 +29,8 @@ So yeah, BEEP is:
 
 * Add new expense
 * View all expenses
+* View expenses by id
+* View expenses by filter
 * Delete expense
 * Calculate total expense
 
@@ -38,7 +40,18 @@ So yeah, BEEP is:
 * shopping
 * transport
 * bills
+* savings
 * other
+
+### 📂 Payment Method
+* cash
+* qris
+* credit
+* virtual_account
+* bank_transfer
+* debit_card
+* e_wallet
+* other;
 
 ---
 
@@ -60,7 +73,9 @@ beep-app/
 │   ├── services/
 │   │   └── expenseService.ts      # Business logic
 │   ├── utils/
-│   │   └── storage.ts              # setup for save data to json file
+|   |   ├── function               # general function for help application
+|   |   |      └── formatDate.ts   # function for formating date
+│   │   └── storage.ts             # setup for save data to json file
 │   └── index.ts                   # CLI entry point
 ├── dist/                          # Compiled JavaScript (ignored by git)
 ├── tsconfig.json                  # TypeScript configuration

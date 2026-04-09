@@ -1,9 +1,9 @@
+// services/expense.service.ts
 import { loadExpensesData, saveExpensesData } from "../utils/storage.utils.js";
+import { validationError } from "../utils/error.helper.js";
 import type {
-  Category,
   CreateExpensePayload,
   Expense,
-  PaymentMethod,
   UpdateExpensePayload,
 } from "../types/expense.types.js";
 
@@ -17,13 +17,13 @@ export const addExpense = async (
   payload: CreateExpensePayload,
 ): Promise<Expense> => {
   if (!payload.title || payload.title.trim().length === 0) {
-    throw new Error("Title is required");
+    throw validationError("Title is required", { field: "title", value: payload.title });
   }
   if (!payload.amount || payload.amount < 0) {
-    throw new Error("Amount is required and must be greater than 0");
+    throw validationError("Amount is required and must be greater than 0", { field: "amount", value: payload.amount });
   }
   if (!payload.paymentMethod) {
-    throw new Error("Payment method is required");
+    throw validationError("Payment method is required", { field: "paymentMethod", value: payload.paymentMethod });
   }
   let newId = expenses.length > 0 ? Math.max(...expenses.map((e) => e.id)) : 0;
   const newExpense: Expense = {
@@ -76,7 +76,7 @@ export const updateExpense = async (
   if ("amount" in payload) expense.amount = payload.amount;
   if ("note" in payload) expense.note = payload.note;
   if (payload.category) expense.category = payload.category;
-  if (payload.paymentMethod) expense.paymentProvider = payload.paymentMethod;
+  if (payload.paymentMethod) expense.paymentMethod = payload.paymentMethod;
   if ("paymentProvider" in payload)
     expense.paymentProvider = payload.paymentProvider;
 

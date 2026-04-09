@@ -2,16 +2,18 @@ export interface BaseError {
   code: string;
   message: string;
   timestamp: Date;
+  detail?:any;
 }
 
 export interface NotFoundError extends BaseError {
   path?: string;
 }
 
-export const validationError = (message: string): BaseError => ({
+export const validationError = (message: string, detail?: any): BaseError => ({
   code: "VALIDATION_ERROR",
   message,
   timestamp: new Date(),
+  detail
 });
 
 export const notFoundError = (message: string): NotFoundError => ({

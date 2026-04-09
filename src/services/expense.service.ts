@@ -1,6 +1,5 @@
 import { loadExpensesData, saveExpensesData } from "../utils/storage.js";
-import type { Expense } from "./../models/expense.js";
-import { isValidDate, parseDate } from "../utils/function/formatDate.js";
+import type { Category, Expense, PaymentMethod } from "../types/expense.types.js";
 
 let expenses: Expense[] = [];
 
@@ -12,8 +11,8 @@ export const addExpense = async (
   payload: {
     title: string;
     amount: number;
-    category: Expense["category"];
-    paymentMethod: Expense["paymentMethod"];
+    category: Category;
+    paymentMethod: PaymentMethod;
     note?: string;
     paymentProvider?: string;
   },
@@ -74,8 +73,8 @@ export const updateExpense = async (update: {
   title?: string;
   amount?: number;
   note?: string;
-  category?: Expense["category"];
-  paymentMethod?: Expense["paymentMethod"];
+  category?: Category;
+  paymentMethod?: PaymentMethod;
   paymentProvider?: string;
 }): Promise<Expense | null> => {
   const expense = expenses.find((e) => e.id === update.id);

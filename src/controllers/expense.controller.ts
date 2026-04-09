@@ -5,7 +5,7 @@ import {
   getExpenses,
   getExpensesById,
   updateExpense,
-} from "../services/expense_service.js";
+} from "../services/expense.service.js";
 import { isValidDate, parseDate } from "../utils/function/formatDate.js";
 
 export const getAll = (req: Request, res: Response) => {

@@ -1,6 +1,6 @@
 import { existsSync } from "fs";
 import * as fs from "fs/promises";
-import type { Expense } from "../models/expense.js";
+import type { Expense } from "../types/expense.types.js";
 import path from "path";
 
 const DATA_DIR = "data"

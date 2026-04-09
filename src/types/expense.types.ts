@@ -22,7 +22,13 @@ export interface Expense {
   amount: number;
   category: Category;
   note?: string;
-  paymentMethod: PaymentMethod,
-  paymentProvider?: string,
+  paymentMethod: PaymentMethod;
+  paymentProvider?: string;
   createdAt: Date;
 }
+
+export type CreateExpensePayload = Omit<Expense, "id" | "createdAt">;
+
+export type UpdateExpensePayload = Partial<Omit<Expense, "createdAt">> & {
+  id: number;
+};

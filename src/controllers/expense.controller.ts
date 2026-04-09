@@ -6,7 +6,7 @@ import {
   getExpensesById,
   updateExpense,
 } from "../services/expense.service.js";
-import { isValidDate, parseDate } from "../utils/function/formatDate.js";
+import { isValidDate, parseDate } from "../utils/date.formatter.js";
 
 export const getAll = (req: Request, res: Response) => {
   let result = getExpenses();

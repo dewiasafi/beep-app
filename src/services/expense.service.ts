@@ -1,5 +1,11 @@
-import { loadExpensesData, saveExpensesData } from "../utils/storage.js";
-import type { Category, Expense, PaymentMethod } from "../types/expense.types.js";
+import { loadExpensesData, saveExpensesData } from "../utils/storage.utils.js";
+import type {
+  Category,
+  CreateExpensePayload,
+  Expense,
+  PaymentMethod,
+  UpdateExpensePayload,
+} from "../types/expense.types.js";
 
 let expenses: Expense[] = [];
 
@@ -8,15 +14,7 @@ export async function initExpenses() {
 }
 
 export const addExpense = async (
-  payload: {
-    title: string;
-    amount: number;
-    category: Category;
-    paymentMethod: PaymentMethod;
-    note?: string;
-    paymentProvider?: string;
-  },
-  //note: params yang required didahulukan baru yang opsional (wajib)
+  payload: CreateExpensePayload,
 ): Promise<Expense> => {
   if (!payload.title || payload.title.trim().length === 0) {
     throw new Error("Title is required");
@@ -68,35 +66,21 @@ export const deleteExpense = async (id: number): Promise<boolean> => {
   return false;
 };
 
-export const updateExpense = async (update: {
-  id: number;
-  title?: string;
-  amount?: number;
-  note?: string;
-  category?: Category;
-  paymentMethod?: PaymentMethod;
-  paymentProvider?: string;
-}): Promise<Expense | null> => {
-  const expense = expenses.find((e) => e.id === update.id);
+export const updateExpense = async (
+  payload: UpdateExpensePayload,
+): Promise<Expense | null> => {
+  const expense = expenses.find((e) => e.id === payload.id);
   if (!expense) return null;
 
-  if ("title" in update) expense.title = update.title;
-  if ("amount" in update) expense.amount = update.amount;
-  if ("note" in update) expense.note = update.note;
-  if (update.category) expense.category = update.category;
-  if (update.paymentMethod) expense.paymentProvider = update.paymentMethod;
-  if ("paymentProvider" in update) expense.paymentProvider = update.paymentProvider;
+  if ("title" in payload) expense.title = payload.title;
+  if ("amount" in payload) expense.amount = payload.amount;
+  if ("note" in payload) expense.note = payload.note;
+  if (payload.category) expense.category = payload.category;
+  if (payload.paymentMethod) expense.paymentProvider = payload.paymentMethod;
+  if ("paymentProvider" in payload)
+    expense.paymentProvider = payload.paymentProvider;
 
   await saveExpensesData(expenses);
-  console.log(`✏️ Updated expense ID: ${update.id}`);
+  console.log(`✏️ Updated expense ID: ${payload.id}`);
   return expense;
-};
-
-export const getTotalExpense = (): number => {
-  return expenses.reduce((sum, ex) => sum + ex.amount, 0);
-};
-
-export const getAverageExpense = (): number => {
-  if (expenses.length === 0) return 0;
-  return getTotalExpense() / expenses.length;
 };

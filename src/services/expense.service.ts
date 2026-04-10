@@ -1,86 +1,114 @@
-// services/expense.service.ts
 import { loadExpensesData, saveExpensesData } from "../utils/storage.utils.js";
-import { validationError } from "../utils/error.helper.js";
+import { notFoundError } from "../utils/error.helper.js";
+import type { Expense } from "../types/expense.types.js";
 import type {
   CreateExpensePayload,
-  Expense,
   UpdateExpensePayload,
-} from "../types/expense.types.js";
+} from "../schemas/expense.schema.js";
 
-let expenses: Expense[] = [];
+let expenses: Expense[] | null = null;
 
-export async function initExpenses() {
-  expenses = await loadExpensesData();
+async function ensureExpensesLoaded(): Promise<Expense[]> {
+  if (expenses === null) {
+    expenses = await loadExpensesData();
+  }
+  return expenses;
+}
+
+async function saveExpenses(newExpense: Expense[]): Promise<void> {
+  expenses = newExpense;
+  await saveExpensesData(newExpense);
+}
+
+function generateId(expensesList: Expense[]): number {
+  return expensesList.length > 0
+    ? Math.max(...expensesList.map((e) => e.id)) + 1
+    : 1;
 }
 
 export const addExpense = async (
   payload: CreateExpensePayload,
 ): Promise<Expense> => {
-  if (!payload.title || payload.title.trim().length === 0) {
-    throw validationError("Title is required", { field: "title", value: payload.title });
-  }
-  if (!payload.amount || payload.amount < 0) {
-    throw validationError("Amount is required and must be greater than 0", { field: "amount", value: payload.amount });
-  }
-  if (!payload.paymentMethod) {
-    throw validationError("Payment method is required", { field: "paymentMethod", value: payload.paymentMethod });
-  }
-  let newId = expenses.length > 0 ? Math.max(...expenses.map((e) => e.id)) : 0;
+  const expensesList = await ensureExpensesLoaded();
+  const newId = generateId(expensesList);
+
   const newExpense: Expense = {
-    id: newId + 1,
-    title: payload.title,
-    amount: payload.amount,
-    category: payload.category,
-    paymentMethod: payload.paymentMethod,
+    id: newId,
+    ...payload,
     createdAt: new Date(),
   };
-  if (payload.note) newExpense.note = payload.note;
-  if (payload.paymentProvider)
-    newExpense.paymentProvider = payload.paymentProvider;
 
-  expenses.push(newExpense);
-  await saveExpensesData(expenses);
-  console.log(
-    `✅ Added: ${payload.title} - Rp${payload.amount} (${payload.paymentMethod}${payload.paymentProvider ? ` - ${payload.paymentProvider}` : ""})`,
-  );
+  expensesList.push(newExpense);
+  await saveExpenses(expensesList);
   return newExpense;
 };
 
-export const getExpenses = (): Expense[] => {
-  return [...expenses];
-};
+export const getExpenseById = async (id: number): Promise<Expense> => {
+  const expenses = await ensureExpensesLoaded();
+  const expense = expenses.find((e) => e.id === id);
 
-export const getExpensesById = (id: number): Expense | undefined => {
-  return expenses.find((e) => e.id === id);
-};
-
-export const deleteExpense = async (id: number): Promise<boolean> => {
-  const initialLength = expenses.length;
-  expenses = expenses.filter((ex) => ex.id !== id);
-
-  if (expenses.length < initialLength) {
-    await saveExpensesData(expenses);
-    console.log(`🗑️ Deleted expense ID: ${id}`);
-    return true;
+  if (!expense) {
+    throw notFoundError(`Expense with id ${id} not found`);
   }
-  return false;
+
+  return expense;
+};
+
+export const getAllExpenses = async (): Promise<Expense[]> => {
+  const expensesList = await ensureExpensesLoaded();
+  return [...expensesList];
 };
 
 export const updateExpense = async (
-  payload: UpdateExpensePayload,
-): Promise<Expense | null> => {
-  const expense = expenses.find((e) => e.id === payload.id);
-  if (!expense) return null;
+  payload: UpdateExpensePayload & { id: number },
+): Promise<Expense> => {
+  const expensesList = await ensureExpensesLoaded();
+  const index = expensesList.findIndex((e) => e.id === payload.id);
 
-  if ("title" in payload) expense.title = payload.title;
-  if ("amount" in payload) expense.amount = payload.amount;
-  if ("note" in payload) expense.note = payload.note;
-  if (payload.category) expense.category = payload.category;
-  if (payload.paymentMethod) expense.paymentMethod = payload.paymentMethod;
-  if ("paymentProvider" in payload)
+  if (index === -1) {
+    throw notFoundError(`Expense with id ${payload.id} not found`);
+  }
+
+  const expense = expensesList[index]!;
+
+  if (payload.title !== undefined) {
+    expense.title = payload.title;
+  }
+  if (payload.amount !== undefined) {
+    expense.amount = payload.amount;
+  }
+  if (payload.category !== undefined) {
+    expense.category = payload.category;
+  }
+  if (payload.paymentMethod !== undefined) {
+    expense.paymentMethod = payload.paymentMethod;
+  }
+  if (payload.note !== undefined) {
+    expense.note = payload.note;
+  }
+  if (payload.paymentProvider !== undefined) {
     expense.paymentProvider = payload.paymentProvider;
+  }
 
-  await saveExpensesData(expenses);
-  console.log(`✏️ Updated expense ID: ${payload.id}`);
+  await saveExpenses(expensesList);
+
   return expense;
 };
+
+export async function deleteExpense(
+  id: number,
+): Promise<{ success: boolean; message: string }> {
+  const expensesList = await ensureExpensesLoaded();
+  const filteredExpenses = expensesList.filter((ex) => ex.id !== id);
+
+  if (filteredExpenses.length === expensesList.length) {
+    throw notFoundError(`Expense with id ${id} not found`);
+  }
+
+  await saveExpenses(filteredExpenses);
+
+  return {
+    success: true,
+    message: `Expense with id ${id} deleted successfully`,
+  };
+}

@@ -2,180 +2,167 @@ import type { Request, Response } from "express";
 import {
   addExpense,
   deleteExpense,
-  getExpenses,
-  getExpensesById,
+  getAllExpenses,
+  getExpenseById,
   updateExpense,
 } from "../services/expense.service.js";
 import { isValidDate, parseDate } from "../utils/date.formatter.js";
+import type { BaseError } from "../utils/error.helper.js";
+import type {
+  CreateExpensePayload,
+  ExpenseQuery,
+  UpdateExpensePayload,
+} from "../schemas/expense.schema.js";
 
-export const getAll = (req: Request, res: Response) => {
-  let result = getExpenses();
+export const getAll = async (req: Request, res: Response) => {
+  try {
+    let result = await getAllExpenses();
+    const query = req.validatedQuery as ExpenseQuery;
+    const {
+      search,
+      category,
+      paymentMethod,
+      paymentProvider,
+      date,
+      start,
+      end,
+    } = query;
 
-  const { search, category, paymentMethod, paymentProvider, date, start, end } =
-    req.query;
-
-  if (category && typeof category === "string") {
-    result = result.filter((e) => e.category === category);
-  }
-
-  if (paymentMethod && typeof paymentMethod === "string") {
-    result = result.filter((e) => e.paymentMethod === paymentMethod);
-  }
-
-  if (paymentProvider && typeof paymentProvider === "string") {
-    result = result.filter((e) => e.paymentProvider === paymentProvider);
-  }
-
-  if (date && typeof date === "string") {
-    if (!isValidDate(date)) {
-      return res.status(400).json({
-        status: false,
-        message: `Invalid date format (dd-mm-yyy)`,
-      });
+    if (category) {
+      result = result.filter((e) => e.category === category);
     }
 
-    const targetDate = parseDate(date);
-    if (targetDate) {
-      const startOfDay = new Date(targetDate);
-      startOfDay.setHours(0, 0, 0, 0);
-      const endOfDay = new Date(targetDate);
-      endOfDay.setHours(23, 59, 59, 999);
-
-      result = result.filter((e) => {
-        const expenseDate = new Date(e.createdAt);
-        return expenseDate >= startOfDay && expenseDate <= endOfDay;
-      });
-    }
-  }
-
-  if (start && end && typeof start === "string" && typeof end === "string") {
-    if (!isValidDate(start) && !isValidDate(end)) {
-      return res.status(400).json({
-        status: false,
-        message: `Invalid date format (dd-mm-yyyy)`,
-      });
+    if (paymentMethod) {
+      result = result.filter((e) => e.paymentMethod === paymentMethod);
     }
 
-    const startDate = parseDate(start);
-    const endDate = parseDate(end);
+    if (paymentProvider) {
+      result = result.filter((e) => e.paymentProvider === paymentProvider);
+    }
 
-    if (startDate && endDate) {
-      if (startDate > endDate) {
-        return res.status(400).json({
-          status: false,
-          message: `Invalid Date`,
+    if (date) {
+      const targetDate = parseDate(date);
+      if (targetDate) {
+        const startOfDay = new Date(targetDate);
+        startOfDay.setHours(0, 0, 0, 0);
+        const endOfDay = new Date(targetDate);
+        endOfDay.setHours(23, 59, 59, 999);
+        result = result.filter((e) => {
+          const expenseDate = new Date(e.createdAt);
+          return expenseDate >= startOfDay && expenseDate <= endOfDay;
         });
       }
-
-      const start = new Date(startDate);
-      start.setHours(0, 0, 0, 0);
-
-      const end = new Date(endDate);
-      end.setHours(23, 59, 59, 999);
-
-      result = result.filter((e) => {
-        const expenseDate = new Date(e.createdAt);
-        return expenseDate >= start && expenseDate <= end;
-      });
     }
-  }
 
-  if (search && typeof search === "string") {
-    const searchLower = search.toLowerCase();
-    result = result.filter(
-      (e) =>
-        e.title.toLowerCase().includes(searchLower) ||
-        (e.note && e.note.toLowerCase().includes(searchLower)),
-    );
-  }
-  const total = result.reduce((sum, e) => sum + e.amount, 0);
-  res.json({
-    success: true,
-    data: result,
-    total,
-  });
-};
+    if (start && end) {
+      const startDate = parseDate(start);
+      const endDate = parseDate(end);
 
-export const getById = (req: Request, res: Response) => {
-  const id = Number(req.params.id);
+      if (startDate && endDate) {
+        const startOfRange = new Date(startDate);
+        startOfRange.setHours(0, 0, 0, 0);
+        const endOfRange = new Date(endDate);
+        endOfRange.setHours(23, 59, 59, 999);
 
-  const expense = getExpensesById(id);
+        result = result.filter((e) => {
+          const expenseDate = new Date(e.createdAt);
+          return expenseDate >= startOfRange && expenseDate <= endOfRange;
+        });
+      }
+    }
 
-  if (!expense) {
-    return res.status(404).json({
+    if (search) {
+      const searchLower = search.toLowerCase();
+      result = result.filter(
+        (e) =>
+          e.title.toLowerCase().includes(searchLower) ||
+          (e.note && e.note.toLowerCase().includes(searchLower)),
+      );
+    }
+    const total = result.reduce((sum, e) => sum + e.amount, 0);
+    res.json({
+      success: true,
+      data: result,
+      total,
+    });
+  } catch (error) {
+    const err = error as BaseError;
+    res.status(500).json({
       success: false,
-      message: `Expense with id ${id} not found`,
+      error: err.message || "Internal server error",
     });
   }
+};
 
-  res.json({ success: true, data: expense });
+export const getById = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.validatedParams as { id: number };
+    const expense = await getExpenseById(id);
+    res.json({ success: true, data: expense });
+  } catch (error) {
+    const err = error as BaseError;
+    if (err.code === "NOT_FOUND") {
+      return res.status(404).json({ success: false, error: err.message });
+    }
+    res.status(500).json({ success: false, error: err.message });
+  }
 };
 
 export const deleteById = async (req: Request, res: Response) => {
-  const id = Number(req.params.id);
-  const deleted = await deleteExpense(id);
-
-  if (!deleted) {
-    return res.status(404).json({
-      status: false,
-      message: `Delete failed. Id ${id} not found`,
-    });
+  try {
+    const { id } = req.validatedParams as { id: number };
+    const result = await deleteExpense(id);
+    res.json({ success: true, message: result.message });
+  } catch (error) {
+    const err = error as BaseError;
+    if (err.code === "NOT_FOUND") {
+      return res.status(404).json({ success: false, error: err.message });
+    }
+    res.status(500).json({ success: false, error: err.message });
   }
-
-  res.json({ success: true, message: "Delete Success" });
 };
 
 export const createExpense = async (req: Request, res: Response) => {
   try {
-    const { title, amount, category, paymentMethod, paymentProvider, note } =
-      req.body;
-    if (!title || !amount || !category || !paymentMethod) {
-      return res.status(400).json({
-        status: false,
-        message: "Missing required fields",
-      });
-    }
+    const payload = req.body as CreateExpensePayload;
+    const newExpense = await addExpense(payload);
 
-    const newExpense = await addExpense({
-      title,
-      amount,
-      category,
-      paymentMethod,
-      paymentProvider,
-      note,
-    });
     res.status(201).json({
-      status: true,
+      success: true,
       data: newExpense,
     });
   } catch (error) {
-    res.status(400).json({
+    const err = error as BaseError;
+    
+    if (err.code === "STORAGE_ERROR") {
+      return res.status(500).json({
+        success: false,
+        error: "Failed to save data. Please try again.",
+      });
+    }
+    res.status(500).json({
       success: false,
-      message: error instanceof Error ? error.message : "Unknown error",
+      error: err.message || "Internal server error",
     });
   }
 };
 
 export const editById = async (req: Request, res: Response) => {
   try {
-    const id = Number(req.params.id);
-    const updates = req.body;
-
-    const updated = await updateExpense({...updates, id});
-    if (!updated) {
-      return res.status(404).json({
-        success: false,
-        message: `Expense with id ${id} not found`,
-      });
-    }
+    const { id } = req.validatedParams as { id: number };
+    const updates = req.validatedBody as UpdateExpensePayload;
+    const updated = await updateExpense({ ...updates, id });
 
     res.json({ success: true, data: updated });
   } catch (error) {
-    res
-      .status(400)
-      .json({
-        status: false,
-        message: error instanceof Error ? error.message : "Unknown error",
-      });
+    const err = error as BaseError;
+    if (err.code === "NOT_FOUND") {
+      return res.status(404).json({ success: false, error: err.message });
+    }
+
+    res.status(500).json({
+      success: false,
+      error: err.message || "Internal server error",
+    });
   }
 };

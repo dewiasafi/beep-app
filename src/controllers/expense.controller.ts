@@ -13,6 +13,12 @@ import type {
   ExpenseQuery,
   UpdateExpensePayload,
 } from "../schemas/expense.schema.js";
+import {
+  internalError,
+  notFound,
+  successCreated,
+  successResponse,
+} from "../utils/response.helper.js";
 
 export const getAll = async (req: Request, res: Response) => {
   try {
@@ -80,17 +86,14 @@ export const getAll = async (req: Request, res: Response) => {
       );
     }
     const total = result.reduce((sum, e) => sum + e.amount, 0);
-    res.json({
-      success: true,
+    successResponse({
+      res,
       data: result,
       total,
     });
   } catch (error) {
     const err = error as BaseError;
-    res.status(500).json({
-      success: false,
-      error: err.message || "Internal server error",
-    });
+    return internalError(res, err.message || "Internal server error");
   }
 };
 
@@ -98,13 +101,13 @@ export const getById = async (req: Request, res: Response) => {
   try {
     const { id } = req.validatedParams as { id: number };
     const expense = await getExpenseById(id);
-    res.json({ success: true, data: expense });
+    return successResponse({ res, data: expense });
   } catch (error) {
     const err = error as BaseError;
     if (err.code === "NOT_FOUND") {
-      return res.status(404).json({ success: false, error: err.message });
+      return notFound(res, err.message);
     }
-    res.status(500).json({ success: false, error: err.message });
+    return internalError(res, err.message);
   }
 };
 
@@ -112,13 +115,13 @@ export const deleteById = async (req: Request, res: Response) => {
   try {
     const { id } = req.validatedParams as { id: number };
     const result = await deleteExpense(id);
-    res.json({ success: true, message: result.message });
+    return successResponse({ res, message: result.message });
   } catch (error) {
     const err = error as BaseError;
     if (err.code === "NOT_FOUND") {
-      return res.status(404).json({ success: false, error: err.message });
+      return notFound(res, err.message);
     }
-    res.status(500).json({ success: false, error: err.message });
+    return internalError(res, err.message);
   }
 };
 
@@ -127,23 +130,14 @@ export const createExpense = async (req: Request, res: Response) => {
     const payload = req.body as CreateExpensePayload;
     const newExpense = await addExpense(payload);
 
-    res.status(201).json({
-      success: true,
-      data: newExpense,
-    });
+    successCreated(res, newExpense);
   } catch (error) {
     const err = error as BaseError;
-    
+
     if (err.code === "STORAGE_ERROR") {
-      return res.status(500).json({
-        success: false,
-        error: "Failed to save data. Please try again.",
-      });
+      return internalError(res, "Failed to save data. Please try again.");
     }
-    res.status(500).json({
-      success: false,
-      error: err.message || "Internal server error",
-    });
+    return internalError(res, err.message || "Internal server error");
   }
 };
 
@@ -152,17 +146,13 @@ export const editById = async (req: Request, res: Response) => {
     const { id } = req.validatedParams as { id: number };
     const updates = req.validatedBody as UpdateExpensePayload;
     const updated = await updateExpense({ ...updates, id });
-
-    res.json({ success: true, data: updated });
+    return successResponse({ res, data: updated });
   } catch (error) {
     const err = error as BaseError;
     if (err.code === "NOT_FOUND") {
-      return res.status(404).json({ success: false, error: err.message });
+      return notFound(res, err.message);
     }
 
-    res.status(500).json({
-      success: false,
-      error: err.message || "Internal server error",
-    });
+    return internalError(res, err.message || "Internal server error");
   }
 };

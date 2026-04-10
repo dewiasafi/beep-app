@@ -34,9 +34,19 @@ export const addExpense = async (
 
   const newExpense: Expense = {
     id: newId,
-    ...payload,
+    title: payload.title,
+    amount: payload.amount,
+    category: payload.category,
+    paymentMethod: payload.paymentMethod,
     createdAt: new Date(),
   };
+
+  if (payload.note !== undefined) {
+    newExpense.note = payload.note;
+  }
+  if (payload.paymentProvider !== undefined) {
+    newExpense.paymentProvider = payload.paymentProvider;
+  }
 
   expensesList.push(newExpense);
   await saveExpenses(expensesList);

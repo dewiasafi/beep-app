@@ -1,8 +1,8 @@
-export interface BaseError {
+export interface BaseError<TDetail = unknown>  {
   code: string;
   message: string;
   timestamp: Date;
-  detail?:any;
+  detail?:TDetail;
 }
 
 export interface NotFoundError extends BaseError {

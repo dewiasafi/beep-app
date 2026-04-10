@@ -65,6 +65,20 @@ export const ExpenseQuerySchema = z
       .string()
       .regex(/^\d{2}-\d{2}-\d{4}$/, "Invalid date format (dd-mm-yyyy)")
       .optional(),
+    page: z.coerce.number().int().positive().default(1).optional(),
+    limit: z.coerce
+      .number()
+      .int()
+      .positive()
+      .min(1)
+      .max(100)
+      .default(10)
+      .optional(),
+    sortBy: z
+      .enum(["createdAt", "amount", "title"])
+      .default("createdAt")
+      .optional(),
+    sortOrder: z.enum(["asc", "desc"]).default("desc").optional(),
   })
   .refine(
     (data) => {
@@ -84,7 +98,6 @@ export const ExpenseQuerySchema = z
 export const IdParamSchema = z.object({
   id: z.coerce.number().positive(),
 });
-
 
 export type ExpenseQuery = z.infer<typeof ExpenseQuerySchema>;
 export type CreateExpensePayload = z.infer<typeof CreateExpensePayloadSchema>;

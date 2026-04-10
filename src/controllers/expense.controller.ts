@@ -32,6 +32,10 @@ export const getAll = async (req: Request, res: Response) => {
       date,
       start,
       end,
+      page = 1,
+      limit = 10,
+      sortBy = "createdAt",
+      sortOrder = "desc",
     } = query;
 
     if (category) {
@@ -85,11 +89,35 @@ export const getAll = async (req: Request, res: Response) => {
           (e.note && e.note.toLowerCase().includes(searchLower)),
       );
     }
-    const total = result.reduce((sum, e) => sum + e.amount, 0);
+
+    result.sort((a, b) => {
+      let aVal: any = a[sortBy as keyof typeof a];
+      let bVal: any = b[sortBy as keyof typeof b];
+
+      if (sortBy === "createdAt") {
+        aVal = new Date(aVal).getTime();
+        bVal = new Date(bVal).getTime();
+      }
+
+      if (sortOrder === "asc") {
+        return aVal > bVal ? 1 : -1;
+      } else {
+        return aVal < bVal ? 1 : -1;
+      }
+    });
+
+    const totalAmount = result.reduce((sum, e) => sum + e.amount, 0);
+    const startIndex = (page - 1) * limit;
+    const endIndex = startIndex + limit;
+    const paginatedData = result.slice(startIndex, endIndex);
+    const totalData = result.length
     successResponse({
       res,
-      data: result,
-      total,
+      data: paginatedData,
+      total: totalAmount,
+      page,
+      limit,
+      totalData
     });
   } catch (error) {
     const err = error as BaseError;

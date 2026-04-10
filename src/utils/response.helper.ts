@@ -4,14 +4,14 @@ interface Success<T> {
   res: Response;
   data?: T;
   message?: string;
-
   total?: number;
   page?: number;
   limit?: number;
+  totalData?: number
 }
 
 export const successResponse = <T>(options: Success<T>) => {
-  const { res, data, message, total, page, limit } = options;
+  const { res, data, message, total, page, limit , totalData} = options;
 
   const response: any = {
     success: true,
@@ -35,6 +35,10 @@ export const successResponse = <T>(options: Success<T>) => {
 
   if (limit !== undefined) {
     response.limit = limit;
+  }
+
+   if (totalData !== undefined) {
+    response.totalData = totalData;
   }
 
   return res.status(200).json(response);

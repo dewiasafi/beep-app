@@ -1,4 +1,3 @@
-// types/express.d.ts (buat file ini)
 declare global {
   namespace Express {
     interface Request {
